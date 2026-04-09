@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Todo App</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0e0e0c;
+      --surface:     #161614;
+      --border:      #2a2a26;
+      --border-focus:#5a5a52;
+      --text:        #f0ede6;
+      --muted:       #6b6b60;
+      --hint:        #3a3a34;
+      --accent:      #c8b97a;
+      --accent-dim:  #8a7d4e;
+      --green:       #1D9E75;
+      --red:         #c0524f;
+      --radius:      10px;
+      --radius-lg:   14px;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--hint) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hint) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* top glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -160px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(200,185,122,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 660px;
+      margin: 0 auto;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+    .header-left p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+      letter-spacing: 0.04em;
+    }
+    .btn-logout {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 4px;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Stats ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+      opacity: 0.5;
+    }
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stat-val {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    /* ── Add Card ── */
+    .add-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .add-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+      opacity: 0.5;
+    }
+    .add-card h2 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 14px;
+      font-weight: 400;
+    }
+    .field { margin-bottom: 10px; }
+    .field input,
+    .field textarea {
+      width: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+      letter-spacing: 0.02em;
+    }
+    .field input::placeholder,
+    .field textarea::placeholder { color: var(--muted); }
+    .field input:focus,
+    .field textarea:focus { border-color: var(--border-focus); }
+    .field textarea { min-height: 70px; }
+
+    .btn-add {
+      width: 100%;
+      padding: 11px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-dim);
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-add:hover { background: rgba(200,185,122,0.08); }
+    .btn-add:active { transform: scale(0.99); }
+    .btn-add:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+    .filter-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 5px 16px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--border-focus); color: var(--text); }
+    .filter-btn.active {
+      border-color: var(--accent-dim);
+      color: var(--accent);
+      background: rgba(200,185,122,0.06);
+    }
+
+    /* ── Todo List ── */
+    .todo-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .todo-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+    .todo-item:hover { border-color: var(--border-focus); }
+    .todo-item.done { opacity: 0.45; }
+
+    .check-btn {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-focus);
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .check-btn:hover { border-color: var(--green); }
+    .check-btn.checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .check-btn.checked::after {
+      content: '';
+      display: block;
+      width: 5px; height: 9px;
+      border: 2px solid #fff;
+      border-top: none; border-left: none;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+
+    .todo-body { flex: 1; min-width: 0; }
+    .todo-title {
+      font-size: 14px;
+      color: var(--text);
+      word-break: break-word;
+      margin-bottom: 4px;
+      letter-spacing: 0.01em;
+    }
+    .todo-item.done .todo-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    .todo-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .todo-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 7px;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+    }
+    .badge.pending {
+      background: rgba(200,185,122,0.1);
+      color: var(--accent-dim);
+      border: 1px solid rgba(200,185,122,0.2);
+    }
+    .badge.completed {
+      background: rgba(29,158,117,0.1);
+      color: var(--green);
+      border: 1px solid rgba(29,158,117,0.2);
+    }
+
+    .del-btn {
+      width: 28px; height: 28px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .del-btn:hover {
+      background: rgba(192,82,79,0.1);
+      color: var(--red);
+      border-color: rgba(192,82,79,0.25);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>My Todos</h1>
+      <p id="userLabel">fetching tasks...</p>
+    </div>
+    <button class="btn-logout" onclick="logout()">sign out</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total</div>
+      <div class="stat-val" id="sTotal">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val" id="sPending">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Done</div>
+      <div class="stat-val" id="sDone">—</div>
+    </div>
+  </div>
+
+  <!-- Add Task -->
+  <div class="add-card">
+    <h2>New Task</h2>
+    <div class="field">
+      <input type="text" id="newTitle" placeholder="what needs to be done?" />
+    </div>
+    <div class="field">
+      <textarea id="newDesc" placeholder="add a description (optional)..."></textarea>
+    </div>
+    <button class="btn-add" id="addBtn" onclick="addTodo()">+ add task</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all', this)">all</button>
+    <button class="filter-btn" onclick="setFilter('pending', this)">pending</button>
+    <button class="filter-btn" onclick="setFilter('done', this)">done</button>
+  </div>
+
+  <!-- Todo List -->
+  <div class="todo-list" id="list">
+    <div class="empty">loading tasks...</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API_BASE = 'http://127.0.0.1:8000/api';
+
+  let todos = [];
+  let activeFilter = 'all';
+
+  // ─────────────────────────────────────────────
+  //  AUTH GUARD — redirect to login if no token
+  // ─────────────────────────────────────────────
+  if (!localStorage.getItem('access_token')) {
+    window.location.href = '/';
+  }
+
+  function authHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+    };
+  }
+
+  function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = '/';
+  }
+
+  // handle 401 — token expired → back to login
+  function handle401(res) {
+    if (res.status === 401) {
+      showToast('session expired, redirecting...');
+      setTimeout(() => logout(), 1200);
+      return true;
+    }
+    return false;
+  }
+
+  // ─────────────────────────────────────────────
+  //  LOAD TODOS — GET /api/todos/
+  // ─────────────────────────────────────────────
+  async function loadTodos() {
+    try {
+      const res = await fetch(API_BASE + '/todos/', { headers: authHeaders() });
+      if (handle401(res)) return;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      todos = await res.json();
+      document.getElementById('userLabel').textContent = todos.length + ' tasks loaded';
+      render();
+    } catch (e) {
+      showToast('error loading: ' + e.message);
+      document.getElementById('list').innerHTML = '<div class="empty">failed to load tasks</div>';
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  CREATE — POST /api/todos/
+  // ─────────────────────────────────────────────
+  async function addTodo() {
+    const title = document.getElementById('newTitle').value.trim();
+    const description = document.getElementById('newDesc').value.trim();
+    if (!title) { showToast('title is required'); return; }
+
+    const btn = document.getElementById('addBtn');
+    btn.disabled = true;
+    btn.textContent = 'adding...';
+
+    try {
+      const res = await fetch(API_BASE + '/todos/', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ title, description, is_completed: false })
+      });
+      if (handle401(res)) return;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const newTodo = await res.json();
+      todos.unshift(newTodo);
+      document.getElementById('newTitle').value = '';
+      document.getElementById('newDesc').value = '';
+      render();
+      showToast('task added');
+    } catch (e) {
+      showToast('error: ' + e.message);
+    }
+
+    btn.disabled = false;
+    btn.textContent = '+ add task';
+  }
+
+  // ─────────────────────────────────────────────
+  //  TOGGLE — PATCH /api/todos/<id>/
+  // ─────────────────────────────────────────────
+  async function toggleTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+    try {
+      const res = await fetch(API_BASE + '/todos/' + id + '/', {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ is_completed: !todo.is_completed })
+      });
+      if (handle401(res)) return;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const updated = await res.json();
+      todos = todos.map(t => t.id === id ? updated : t);
+      render();
+    } catch (e) {
+      showToast('error: ' + e.message);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  DELETE — DELETE /api/todos/<id>/
+  // ─────────────────────────────────────────────
+  async function deleteTodo(id) {
+    if (!confirm('delete this task?')) return;
+    try {
+      const res = await fetch(API_BASE + '/todos/' + id + '/', {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      if (handle401(res)) return;
+      if (res.ok || res.status === 204) {
+        todos = todos.filter(t => t.id !== id);
+        render();
+        showToast('task deleted');
+      } else {
+        throw new Error('HTTP ' + res.status);
+      }
+    } catch (e) {
+      showToast('error: ' + e.message);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  FILTER
+  // ─────────────────────────────────────────────
+  function setFilter(f, btn) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  // ─────────────────────────────────────────────
+  //  RENDER
+  // ─────────────────────────────────────────────
+  function render() {
+    const total   = todos.length;
+    const done    = todos.filter(t => t.is_completed).length;
+    const pending = total - done;
+
+    document.getElementById('sTotal').textContent   = total;
+    document.getElementById('sPending').textContent = pending;
+    document.getElementById('sDone').textContent    = done;
+
+    const visible = todos.filter(t => {
+      if (activeFilter === 'done')    return t.is_completed;
+      if (activeFilter === 'pending') return !t.is_completed;
+      return true;
+    });
+
+    const list = document.getElementById('list');
+
+    if (visible.length === 0) {
+      list.innerHTML = '<div class="empty">no tasks here yet</div>';
+      return;
+    }
+
+    list.innerHTML = visible.map(t => `
+      <div class="todo-item ${t.is_completed ? 'done' : ''}">
+        <button
+          class="check-btn ${t.is_completed ? 'checked' : ''}"
+          onclick="toggleTodo(${t.id})"
+          title="${t.is_completed ? 'mark incomplete' : 'mark complete'}"
+        ></button>
+        <div class="todo-body">
+          <div class="todo-title">${esc(t.title)}</div>
+          ${t.description ? `<div class="todo-desc">${esc(t.description)}</div>` : ''}
+          <div class="todo-meta">
+            <span class="badge ${t.is_completed ? 'completed' : 'pending'}">
+              ${t.is_completed ? 'completed' : 'pending'}
+            </span>
+            ${formatDate(t.created_at)}
+          </div>
+        </div>
+        <button class="del-btn" onclick="deleteTodo(${t.id})" title="delete">&#x2715;</button>
+      </div>
+    `).join('');
+  }
+
+  // ─────────────────────────────────────────────
+  //  HELPERS
+  // ─────────────────────────────────────────────
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    });
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // Enter to add
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.activeElement.id === 'newTitle') addTodo();
+  });
+
+  // Auto load on page open
+  loadTodos();
+</script>
+
+</body>
+</html>

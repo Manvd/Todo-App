@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0e0e0c;
+      --surface:      #161614;
+      --border:       #2a2a26;
+      --border-focus: #5a5a52;
+      --text:         #f0ede6;
+      --muted:        #6b6b60;
+      --hint:         #3a3a34;
+      --accent:       #c8b97a;
+      --accent-dim:   #8a7d4e;
+      --red:          #c0524f;
+      --green:        #1D9E75;
+      --radius:       10px;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--hint) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hint) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -160px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(200,185,122,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+      border-radius: 99px;
+    }
+
+    /* ── Brand ── */
+    .brand {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .brand-icon {
+      width: 44px; height: 44px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 20px;
+    }
+    .brand h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 1.75rem;
+    }
+    .tab {
+      flex: 1;
+      padding: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: var(--surface);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .field input {
+      width: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      padding: 11px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .field input::placeholder { color: var(--muted); }
+    .field input:focus { border-color: var(--border-focus); }
+    .field input.error { border-color: var(--red); }
+
+    /* ── Messages ── */
+    .error-msg {
+      display: none;
+      font-size: 12px;
+      color: var(--red);
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: rgba(192,82,79,0.08);
+      border: 1px solid rgba(192,82,79,0.2);
+      border-radius: var(--radius);
+      text-align: center;
+      animation: shake 0.3s ease;
+    }
+    .error-msg.show { display: block; }
+
+    .success-msg {
+      display: none;
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: rgba(29,158,117,0.08);
+      border: 1px solid rgba(29,158,117,0.2);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .success-msg.show { display: block; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+
+    /* ── Button ── */
+    .btn-submit {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-dim);
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-submit:hover { background: rgba(200,185,122,0.08); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 1.5px solid var(--accent-dim);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Meta ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 1.5rem 0 1rem;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider span { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+    .meta {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .meta code {
+      background: var(--hint);
+      color: var(--text);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">✓</div>
+    <h1>Todo App</h1>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tabLogin" onclick="switchTab('login')">sign in</button>
+    <button class="tab" id="tabRegister" onclick="switchTab('register')">register</button>
+  </div>
+
+  <!-- Login Form -->
+  <div id="formLogin">
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="loginUsername" placeholder="your username" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div class="error-msg" id="loginError"></div>
+    <button class="btn-submit" id="loginBtn" onclick="login()">
+      <span id="loginBtnText">Sign in</span>
+      <div class="spinner" id="loginSpinner"></div>
+    </button>
+    <div class="divider"><span>info</span></div>
+    <div class="meta">Calls <code>POST /api/token/</code><br/>Stores JWT in <code>localStorage</code></div>
+  </div>
+
+  <!-- Register Form -->
+  <div id="formRegister" style="display:none;">
+    {% comment %} {% csrf_token %}  {% endcomment %}
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="regUsername" placeholder="choose a username" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="regPassword" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+    <div class="field">
+      <label>Confirm Password</label>
+      <input type="password" id="regConfirm" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+    <div class="error-msg" id="regError"></div>
+    <div class="success-msg" id="regSuccess"></div>
+    <button class="btn-submit" id="regBtn" onclick="register()">
+      <span id="regBtnText">Create account</span>
+      <div class="spinner" id="regSpinner"></div>
+    </button>
+    <div class="divider"><span>info</span></div>
+    <div class="meta">Calls <code>POST /api/register/</code><br/>Then auto signs you in</div>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = 'http://127.0.0.1:8000/api';
+
+  // If already logged in → go to dashboard
+  if (localStorage.getItem('access_token')) {
+    window.location.href = '/todos/';
+  }
+
+  // ─────────────────────────────────────────
+  //  TABS
+  // ─────────────────────────────────────────
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('formLogin').style.display    = isLogin ? 'block' : 'none';
+    document.getElementById('formRegister').style.display = isLogin ? 'none'  : 'block';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    clearAllErrors();
+  }
+
+  // ─────────────────────────────────────────
+  //  LOGIN — POST /api/token/
+  // ─────────────────────────────────────────
+  async function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+
+    clearAllErrors();
+    if (!username || !password) {
+      showError('loginError', 'please enter username and password');
+      return;
+    }
+
+    setLoading('login', true);
+    try {
+      const res  = await fetch(API_BASE + '/token/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'invalid credentials');
+
+      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('refresh_token', data.refresh);
+      window.location.href = '/todos/';
+    } catch (e) {
+      showError('loginError', e.message);
+      document.getElementById('loginPassword').value = '';
+    }
+    setLoading('login', false);
+  }
+
+  // ─────────────────────────────────────────
+  //  REGISTER — POST /api/register/
+  // ─────────────────────────────────────────
+  async function register() {
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const confirm  = document.getElementById('regConfirm').value.trim();
+
+    clearAllErrors();
+
+    if (!username || !password || !confirm) {
+      showError('regError', 'all fields are required');
+      return;
+    }
+    if (password !== confirm) {
+      showError('regError', 'passwords do not match');
+      return;
+    }
+    if (password.length < 6) {
+      showError('regError', 'password must be at least 6 characters');
+      return;
+    }
+
+    setLoading('reg', true);
+    try {
+      // Step 1 — create account
+      const res  = await fetch(API_BASE + '/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'registration failed');
+
+      showSuccess('regSuccess', 'account created! signing you in...');
+
+      // Step 2 — auto login
+      const loginRes  = await fetch(API_BASE + '/token/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const loginData = await loginRes.json();
+      if (!loginRes.ok) throw new Error('registered! please sign in manually');
+
+      localStorage.setItem('access_token', loginData.access);
+      localStorage.setItem('refresh_token', loginData.refresh);
+      setTimeout(() => { window.location.href = '/todos/'; }, 800);
+
+    } catch (e) {
+      showError('regError', e.message);
+    }
+    setLoading('reg', false);
+  }
+
+  // ─────────────────────────────────────────
+  //  HELPERS
+  // ─────────────────────────────────────────
+  function setLoading(form, on) {
+    const btn  = document.getElementById(form + 'Btn');
+    const text = document.getElementById(form + 'BtnText');
+    const spin = document.getElementById(form + 'Spinner');
+    btn.disabled       = on;
+    text.style.display = on ? 'none'  : 'block';
+    spin.style.display = on ? 'block' : 'none';
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function showSuccess(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function clearAllErrors() {
+    ['loginError', 'regError', 'regSuccess'].forEach(id => {
+      document.getElementById(id).classList.remove('show');
+    });
+  }
+
+  // Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const loginVisible = document.getElementById('formLogin').style.display !== 'none';
+    if (loginVisible) login(); else register();
+  });
+</script>
+
+</body>
+</html>
