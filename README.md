@@ -1,94 +1,105 @@
-# 📝 Todo App with JWT Authentication
+# 📝 Django Todo App with JWT Authentication
 
-A full-stack Todo application with secure user authentication using JSON Web Tokens (JWT). This project demonstrates REST API design, authentication, and CRUD operations.
+A Todo application built using Django and Django REST Framework with JWT authentication. The project uses a modular structure where the API logic is separated from the core Todo models.
 
 ---
 
 ## 🚀 Features
 
-* 🔐 User Authentication (Signup/Login with JWT)
-* 🔒 Protected Routes (Only authenticated users can access todos)
-* ✅ Create, Read, Update, Delete Todos
-* ⚠️ Error Handling & Validation
-* 🔑 Password hashing for security
+* User login system
+* JWT Authentication
+* Protected API routes
+* Create, Read, Update, Delete Todos
+* Frontend using Django Templates
 
 ---
 
 ## 🛠️ Tech Stack
 
-* Backend: Node.js, Express.js
-* Database: MongoDB (Mongoose)
-* Authentication: JSON Web Tokens (JWT), bcrypt
+* Python
+* Django
+* Django REST Framework
+* HTML, CSS (Django Templates)
+* SQLite
 
 ---
 
 ## 📁 Project Structure
 
 ```
-/todo-app
- ├── controllers/
- ├── routes/
- ├── models/
- ├── middleware/
- ├── config/
- ├── .env.example
- ├── server.js
- └── README.md
+todo-project/
+├── api/              # Handles serializers, views, and API logic
+├── todo/             # Contains models (database structure)
+├── templates/        # HTML templates (UI)
+├── manage.py
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## 🧠 Architecture
 
-1. Clone the repository:
+* `todo` app → Defines database models (Todo items)
+* `api` app → Handles serializers, views, and API endpoints
+* `templates` → Provides basic frontend UI
 
-```
+---
+
+## ⚙️ Setup
+
+Clone the repository:
+
+```bash
 git clone https://github.com/your-username/todo-app.git
 cd todo-app
 ```
 
-2. Install dependencies:
+Create virtual environment:
 
-```
-npm install
-```
-
-3. Create a `.env` file:
-
-```
-PORT=5000
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_secret_key
+```bash
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
 ```
 
-4. Run the server:
+Install dependencies:
 
+```bash
+pip install -r requirements.txt
 ```
-npm start
+
+Run migrations:
+
+```bash
+python manage.py migrate
+```
+
+Start server:
+
+```bash
+python manage.py runserver
 ```
 
 ---
 
 ## 📡 API Endpoints
 
-### Auth Routes
+### Auth
 
-* POST `/api/auth/register` → Register user
-* POST `/api/auth/login` → Login user
+* POST /api/auth/login
 
-### Todo Routes (Protected)
+### Todos (Protected)
 
-* GET `/api/todos` → Get all todos
-* POST `/api/todos` → Create todo
-* PUT `/api/todos/:id` → Update todo
-* DELETE `/api/todos/:id` → Delete todo
+* GET /api/todos
+* POST /api/todos
+* PUT /api/todos/<id>
+* DELETE /api/todos/<id>
 
 ---
 
 ## 🔐 Authentication
 
-* Uses JWT for secure authentication
-* Token must be sent in headers:
+Use JWT token in headers:
 
 ```
 Authorization: Bearer <token>
@@ -96,30 +107,14 @@ Authorization: Bearer <token>
 
 ---
 
-## 🌟 Future Improvements
+## 📌 Notes
 
-* Refresh Tokens
-* Pagination & Filtering
-* Role-based access control
-* Deployment (Render / Railway / AWS)
-
----
-
-## 📌 Learning Outcomes
-
-* REST API design
-* Authentication & Authorization
-* Middleware usage
-* Secure password handling
-
----
-
-## 🤝 Contributing
-
-Feel free to fork and improve the project!
+* Do not upload `.env` or database files
+* Use `requirements.txt` for dependencies
+* Make sure migrations are applied before running
 
 ---
 
 ## 📄 License
 
-This project is open-source and available under the MIT License.
+This project is open-source and free to use.
